@@ -1,0 +1,24 @@
+# data
+data/
+*.zip
+
+# python
+__pycache__/
+*.pyc
+
+# pytorch
+*.pth
+*.pt
+
+# logs
+logs/
+wandb/
+
+# environments
+venv/
+.env/
+
+# os
+.DS_Store
+Thumbs.db
+desktop.ini
