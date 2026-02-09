@@ -1,5 +1,6 @@
 import os
 import torch
+import time
 from torch.utils.data import DataLoader
 from datasets.dual_focus_dataset import DualFocusDataset
 from models.backbone import Model
@@ -11,7 +12,7 @@ def main():
     # -------- config --------
     data_root = os.path.join("data", "train")
     batch_size = 4
-    epochs = 5
+    epochs = 10
     lr = 1e-4
     save_dir = "checkpoints"
     os.makedirs(save_dir, exist_ok=True)
@@ -45,10 +46,17 @@ def main():
 
     # -------- training loop --------
     model.train()
+    start_time = time.time()
+
+    num_batches = len(train_loader)
+
     for epoch in range(epochs):
+        epoch_start = time.time()
         epoch_loss = 0.0
 
         for i, (inp, target) in enumerate(train_loader):
+            iter_start = time.time()
+
             inp = inp.to(device)
             target = target.to(device)
 
@@ -59,20 +67,37 @@ def main():
                 0.2 * loss_ssim(pred, target)
             )
 
-
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             epoch_loss += loss.item()
 
-            if (i + 1) % 10 == 0:
-                print(f"Epoch [{epoch+1}/{epochs}] "
-                      f"Iter [{i+1}/{len(train_loader)}] "
-                      f"Loss: {loss.item():.4f}")
+            # -------- ETA calculation --------
+            elapsed = time.time() - start_time
+            completed_iters = epoch * num_batches + (i + 1)
+            total_iters = epochs * num_batches
 
-        avg_loss = epoch_loss / len(train_loader)
-        print(f"Epoch {epoch+1} completed | Avg Loss: {avg_loss:.4f}")
+            iters_left = total_iters - completed_iters
+            avg_time_per_iter = elapsed / completed_iters
+            eta_seconds = iters_left * avg_time_per_iter
+
+            if (i + 1) % 10 == 0:
+                print(
+                    f"Epoch [{epoch+1}/{epochs}] "
+                    f"Iter [{i+1}/{num_batches}] "
+                    f"Loss: {loss.item():.4f} | "
+                    f"ETA: {eta_seconds/60:.1f} min"
+                )
+
+        avg_loss = epoch_loss / num_batches
+        epoch_time = time.time() - epoch_start
+
+        print(
+            f"Epoch {epoch+1} finished | "
+            f"Avg Loss: {avg_loss:.4f} | "
+            f"Epoch Time: {epoch_time/60:.2f} min"
+        )
 
         # save checkpoint
         torch.save(

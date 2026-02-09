@@ -1,7 +1,7 @@
 import os
 import torch
 from torch.utils.data import DataLoader
-
+import time
 from datasets.dual_focus_dataset import DualFocusDataset
 from models.backbone import Model
 from metrics.psnr_y import psnr_y
@@ -42,9 +42,12 @@ def main():
     total_ssim = 0.0
     total_lpips = 0.0
     count = 0
+    total_time = 0.0
 
     with torch.no_grad():
-        for inp, gt in val_loader:
+        for idx, (inp, gt) in enumerate(val_loader):
+            start = time.time()
+
             inp = inp.to(device)
             gt = gt.to(device)
 
@@ -55,11 +58,23 @@ def main():
             total_lpips += lpips_fn(pred, gt).item()
             count += 1
 
+            elapsed = time.time() - start
+            total_time += elapsed
+
+            if (idx + 1) % 50 == 0:
+                print(
+                    f"Validated {idx+1}/{len(val_loader)} | "
+                    f"Time per image: {elapsed:.4f} sec"
+                )
+
+
     avg_psnr = total_psnr / count
     avg_ssim = total_ssim / count
     avg_lpips = total_lpips / count
 
     score = avg_psnr + 10 * avg_ssim - 5 * avg_lpips
+    avg_time = total_time / count
+    print(f"Average runtime per image: {avg_time:.4f} sec")
 
     print("Validation Results")
     print(f"PSNR (Y): {avg_psnr:.4f}")
