@@ -27,17 +27,17 @@ class DualFocusDataset(Dataset):
             if not os.path.exists(base):
                 continue
 
-            drop_root = os.path.join(base, "drop")
+            drop_root = os.path.join(base, "Drop")
             for scene in sorted(os.listdir(drop_root)):
-                drop_scene = os.path.join(base, "drop", scene)
-                blur_scene = os.path.join(base, "blur", scene)
-                clear_scene = os.path.join(base, "clear", scene)
+                drop_scene = os.path.join(base, "Drop", scene)
+                blur_scene = os.path.join(base, "Blur", scene)
+                clear_scene = os.path.join(base, "Clear", scene)
 
                 for name in sorted(os.listdir(drop_scene)):
                     self.samples.append({
-                        "drop": os.path.join(drop_scene, name),
-                        "blur": os.path.join(blur_scene, name),
-                        "clear": os.path.join(clear_scene, name),
+                        "Drop": os.path.join(drop_scene, name),
+                        "Blur": os.path.join(blur_scene, name),
+                        "Clear": os.path.join(clear_scene, name),
                         "is_night": time == "nighttime"
                     })
 
@@ -51,9 +51,9 @@ class DualFocusDataset(Dataset):
     def __getitem__(self, idx):
         s = self.samples[idx]
 
-        drop = self._read(s["drop"])
-        blur = self._read(s["blur"])
-        clear = self._read(s["clear"])
+        drop = self._read(s["Drop"])
+        blur = self._read(s["Blur"])
+        clear = self._read(s["Clear"])
 
         # fake single-image simulation
         if self.mode == "train" and random.random() < self.single_prob:

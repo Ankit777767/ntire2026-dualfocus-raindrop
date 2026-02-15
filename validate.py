@@ -32,7 +32,8 @@ def main():
 
     # -------- model --------
     model = Model().to(device)
-    model.load_state_dict(torch.load(checkpoint, map_location=device))
+    state_dict = torch.load(checkpoint, map_location=device)
+    model.load_state_dict(state_dict)
     model.eval()
 
     # -------- metrics --------

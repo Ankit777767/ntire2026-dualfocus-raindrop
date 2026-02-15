@@ -57,7 +57,13 @@ def main():
     )
 
     # -------- model --------
-    model = Model().to(device)
+    model = Model()
+
+    if torch.cuda.device_count() > 1:
+        print(f"Using {torch.cuda.device_count()} GPUs")
+        model = torch.nn.DataParallel(model)
+
+    model = model.to(device)
 
     # -------- loss & optimizer --------
     loss_rgb = CharbonnierLoss()
@@ -184,10 +190,10 @@ def main():
         if score > best_score:
             best_score = score
             best_epoch = epoch + 1
-            torch.save(
-                model.state_dict(),
-                os.path.join(save_dir, "best_model.pth")
-            )
+            if isinstance(model, torch.nn.DataParallel):
+                torch.save(model.module.state_dict(), os.path.join(save_dir, "best_model.pth"))
+            else:
+                torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
             print(f"🔥 New Best Model Saved at Epoch {best_epoch}")
 
         model.train()
